@@ -1,10 +1,10 @@
 # Summary
 
 ProcMem is a simple C++ library designed for interaction with the memory space 
-of a target process. There are templates and functions for doing things such
-as reading and writing to an external or internal (via dll injection) process.
-I got tired of defining the class in all of my projects, so I compiled it into
-this library to make it easier on myself.
+of a target process on Windows. There are templates and functions for actions
+such as reading and writing to an external or internal (via dll injection) 
+process. I got tired of defining the class in all of my projects, so I 
+compiled it into this library to make it easier on myself.
 
 # Contributing
 
