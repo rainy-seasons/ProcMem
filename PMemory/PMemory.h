@@ -13,29 +13,29 @@ namespace ProcMem {
 		void CleanHandle();
 
 		template<class T>
-		T ReadPtr(DWORD addr)
+		T ReadPtr(LPVOID addr)
 		{
 			return *((T*)addr);
 		}
 
 		template<class T>
-		void WritePtr(DWORD addr, T val)
+		void WritePtr(LPVOID addr, T val)
 		{
 			*((T*)addr) = val;
 		}
 
 		template<class T>
-		T ReadMem(DWORD addr)
+		T ReadMem(LPVOID addr)
 		{
 			T buf;
-			ReadProcessMemory(m_pHandle, (LPVOID)addr, &buf, sizeof(but), NULL);
+			ReadProcessMemory(m_pHandle, addr, &buf, sizeof(but), NULL);
 			return buf;
 		}
 
 		template<class T>
-		T WriteMem(DWORD addr, T val)
+		T WriteMem(LPVOID addr, T val)
 		{
-			WriteProcessMemory(m_pHandle, (LPVOID)addr, &val, sizeof(val), NULL);
+			WriteProcessMemory(m_pHandle, addr, &val, sizeof(val), NULL);
 		}
 
 		template<class T>
@@ -47,7 +47,7 @@ namespace ProcMem {
 		}
 
 		template<int SIZE>
-		void WriteNop(DWORD addr)
+		void WriteNop(LPVOID addr)
 		{
 			auto oldProt = ProtectMemory<BYTE[SIZE]>(addr, PAGE_EXECUTE_READWRITE);
 			for (int i = 0; i < SIZE; i++)
