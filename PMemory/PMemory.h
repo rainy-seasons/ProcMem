@@ -28,7 +28,7 @@ namespace ProcMem {
 		T ReadMem(LPVOID addr)
 		{
 			T buf;
-			ReadProcessMemory(m_pHandle, addr, &buf, sizeof(but), NULL);
+			ReadProcessMemory(m_pHandle, addr, &buf, sizeof(buf), NULL);
 			return buf;
 		}
 
