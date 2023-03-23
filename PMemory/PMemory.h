@@ -1,64 +1,57 @@
 #pragma once
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <TlHelp32.h>
-#include <iostream>
 
-namespace ProcMem {
-	class PMemory
+class PMemory
+{
+private:
+	std::uintptr_t m_PID = 0;
+	HANDLE m_pHandle = nullptr;
+
+public:
+	PMemory(const char* procName);
+	~PMemory();
+
+	std::uintptr_t GetPID();
+	HANDLE GetProcessHandle();
+
+	std::uintptr_t GetModuleAddress(const char* ModuleName);
+
+	// Reads a pointer - only works via dll injection.
+	template<class T>
+	T ReadPtr(LPVOID addr)
 	{
-	public:
-		bool Process(char* procName);
-		DWORD Module(LPSTR ModuleName);
-		HANDLE GetHandle();
-		void CleanHandle();
+		return *((T*)addr);
+	}
 
-		template<class T>
-		T ReadPtr(LPVOID addr)
-		{
-			return *((T*)addr);
-		}
+	template<class T>
+	void WritePtr(LPVOID addr, T val)
+	{
+		*((T*)addr) = val;
+	}
 
-		template<class T>
-		void WritePtr(LPVOID addr, T val)
-		{
-			*((T*)addr) = val;
-		}
+	// Returns the value found at the target address.
+	template<typename T>
+	T ReadMem(std::uintptr_t addr)
+	{
+		T val;
+		ReadProcessMemory(m_pHandle, (LPCVOID)addr, &val, sizeof(T), NULL);
+		return val;
+	}
 
-		template<class T>
-		T ReadMem(LPVOID addr)
-		{
-			T buf;
-			ReadProcessMemory(m_pHandle, addr, &buf, sizeof(buf), NULL);
-			return buf;
-		}
+	// Returns 0 if WPM fails. Returns non-zero if success.
+	template<typename T>
+	bool WriteMem(std::uintptr_t addr, T val)
+	{
+		return WriteProcessMemory(m_pHandle, (LPVOID)addr, &val, sizeof(T), NULL);
+	}
 
-		template<class T>
-		T WriteMem(LPVOID addr, T val)
-		{
-			WriteProcessMemory(m_pHandle, addr, &val, sizeof(val), NULL);
-		}
-
-		template<class T>
-		DWORD ProtectMemory(LPVOID addr, DWORD prot)
-		{
-			DWORD oldProt;
-			VirtualProtectEx(m_pHandle, addr, sizeof(T), prot, &oldProt);
-			return oldProt;
-		}
-
-		template<int SIZE>
-		void WriteNop(LPVOID addr)
-		{
-			auto oldProt = ProtectMemory<BYTE[SIZE]>(addr, PAGE_EXECUTE_READWRITE);
-			for (int i = 0; i < SIZE; i++)
-			{
-				Write<BYTE>(addr + i, 0x90);
-			}
-		}
-
-	private:
-		DWORD m_PID;
-		HANDLE m_pHandle;
-		PROCESSENTRY32 m_pEntry;
-	};
-}
+	template<typename T>
+	std::uintptr_t ProtectMemory(LPVOID addr, std::uintptr_t prot)
+	{
+		std::uintptr_t oldProt;
+		VirtualProtectEx(m_pHandle, addr, sizeof(T), prot, &oldProt);
+		return oldProt;
+	}
+};

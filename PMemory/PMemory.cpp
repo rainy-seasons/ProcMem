@@ -1,43 +1,64 @@
 #include "PMemory.h"
+#include <iostream>
 
-namespace ProcMem {
-	bool PMemory::Process(char* procName)
+// Constructor sets up the PID and Process Handle
+PMemory::PMemory(const char* procName)
+{
+	PROCESSENTRY32 entry;
+	entry.dwSize = sizeof(PROCESSENTRY32);
+	auto snapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+
+	while (Process32Next(snapShot, &entry))
 	{
-		m_pEntry.dwSize = sizeof(m_pEntry);
-
-		HWND Found = FindWindow(NULL, procName);
-		if (Found)
+		if (!strcmp(procName, entry.szExeFile))
 		{
-			GetWindowThreadProcessId(Found, &m_PID);
-			m_pHandle = OpenProcess(PROCESS_ALL_ACCESS, NULL, m_PID);
-			return true;
+			this->m_PID = entry.th32ProcessID;
+			this->m_pHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, this->m_PID);
+			break;
 		}
-
-		std::cout << "Could not attach to target process: " << procName << std::endl;
-		return FALSE;
 	}
 
-	DWORD PMemory::Module(LPSTR ModuleName)
+	if (snapShot)
+		CloseHandle(snapShot);
+}
+
+// Destructor closes handle
+PMemory::~PMemory()
+{
+	if (this->m_pHandle)
+		CloseHandle(this->m_pHandle);
+}
+
+std::uintptr_t PMemory::GetPID()
+{
+	return this->m_PID;
+}
+
+HANDLE PMemory::GetProcessHandle()
+{
+	return this->m_pHandle;
+}
+
+std::uintptr_t PMemory::GetModuleAddress(const char* moduleName)
+{
+	std::uintptr_t moduleAddr = 0;
+	MODULEENTRY32 entry;
+	entry.dwSize = sizeof(MODULEENTRY32);
+
+	auto snapShot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, this->m_PID);
+
+
+	while (Module32Next(snapShot, &entry))
 	{
-		HANDLE hModule = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, m_PID);
-		MODULEENTRY32 mEntry;
-		mEntry.dwSize = sizeof(mEntry);
-
-		do
+		if (!strcmp(moduleName, entry.szModule))
 		{
-			if (!strcmp(mEntry.szModule, ModuleName))
-			{
-				CloseHandle(hModule);
-				return (DWORD)mEntry.modBaseAddr;
-			}
-		} while (Module32Next(hModule, &mEntry));
-
-		CloseHandle(hModule);
-
-		std::cout << "Could not locate module: " << ModuleName << std::endl;
+			moduleAddr = reinterpret_cast<std::uintptr_t>(entry.modBaseAddr);
+			break;
+		}
 	}
 
-	HANDLE PMemory::GetHandle() { return m_pHandle; }
-	void PMemory::CleanHandle() { CloseHandle(m_pHandle); }
+	if (snapShot)
+		CloseHandle(snapShot);
 
+	return moduleAddr;
 }
