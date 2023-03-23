@@ -29,7 +29,7 @@ PMemory::~PMemory()
 		CloseHandle(this->m_pHandle);
 }
 
-std::uintptr_t PMemory::GetPID()
+uintptr_t PMemory::GetPID()
 {
 	return this->m_PID;
 }
@@ -39,9 +39,9 @@ HANDLE PMemory::GetProcessHandle()
 	return this->m_pHandle;
 }
 
-std::uintptr_t PMemory::GetModuleAddress(const char* moduleName)
+uintptr_t PMemory::GetModuleAddress(const char* moduleName)
 {
-	std::uintptr_t moduleAddr = 0;
+	uintptr_t moduleAddr = 0;
 	MODULEENTRY32 entry;
 	entry.dwSize = sizeof(MODULEENTRY32);
 
@@ -52,7 +52,7 @@ std::uintptr_t PMemory::GetModuleAddress(const char* moduleName)
 	{
 		if (!strcmp(moduleName, entry.szModule))
 		{
-			moduleAddr = reinterpret_cast<std::uintptr_t>(entry.modBaseAddr);
+			moduleAddr = reinterpret_cast<uintptr_t>(entry.modBaseAddr);
 			break;
 		}
 	}
