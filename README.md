@@ -23,10 +23,10 @@ std::cout << "Process ID: " << Mem.GetPID() << std::endl;
 auto TargetModule = Mem.GetModuleAddress("targetModule.dll");
 
 // Reads the value at the address of TargetModule + the offset of 0xFFF.
-std::uintptr_t Value Mem.ReadMem<uintptr_t>(TargetModule + 0xFFF);
+uintptr_t Value Mem.ReadMem<uintptr_t>(TargetModule + 0xFFF);
 
 // Writes a new value to a target address. Returns 0 if it fails.
-Mem.WriteMem<std::uintptr_t>(TargetModule + 0xFFF, NewValue);
+Mem.WriteMem<uintptr_t>(TargetModule + 0xFFF, NewValue);
 ```
 
 # Contributing
