@@ -12,7 +12,7 @@ You can either drop the .h and .cpp files into your project and import PMemory.h
 
 ### Example
 
-```C++
+```
 // Creates an object and sets up the Process handle and PID. 
 auto Mem = PMemory("process.exe");
 
