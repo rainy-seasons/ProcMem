@@ -62,3 +62,35 @@ uintptr_t PMemory::GetModuleAddress(const char* moduleName)
 
 	return moduleAddr;
 }
+
+// Writes a NOP byte to a specific address 
+BOOL WriteNOP(HANDLE hProcess, LPVOID lpAddress)
+{
+	BYTE NOP = 0x90;
+	DWORD oldProtect;
+	
+	// Change the memory protection to allow writing
+	if (!VirtualProtectEx(hProcess, lpAddress, sizeof(NOP), PAGE_EXECUTE_READWRITE, &oldProtect))
+	{
+		std::cerr << "VirtualProtectEx failed: " << GetLastError() << std::endl;
+		return FALSE;
+	}
+
+	// Write the NOP instruction
+	SIZE_T written;
+	if (!WriteProcessMemory(hProcess, lpAddress, &NOP, sizeof(NOP), &written) || written != sizeof(NOP))
+	{
+		std::cerr << "WriteProcessMemory failed: " << GetLastError() << std::endl;
+		// Restore the original memory protection
+		VirtualProtectEx(hProcess, lpAddress, sizeof(NOP), oldProtect, &oldProtect);
+		return FALSE;
+	}
+
+	// Restore the original memory protection
+	if (!VirtualProtectEx(hProcess, lpAddress, sizeof(NOP), oldProtect, &oldProtect))
+	{
+		return FALSE;
+	}
+
+	return TRUE;
+}

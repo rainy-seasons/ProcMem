@@ -18,6 +18,8 @@ public:
 
 	uintptr_t GetModuleAddress(const char* ModuleName);
 
+	BOOL WriteNOP(HANDLE hProcess, LPVOID lpAddress);
+
 	// Reads a pointer - only works via dll injection.
 	template<class T>
 	T ReadPtr(LPVOID addr)
@@ -25,6 +27,7 @@ public:
 		return *((T*)addr);
 	}
 
+	// Writes a value to a pointer address - used via dll injection
 	template<class T>
 	void WritePtr(LPVOID addr, T val)
 	{
