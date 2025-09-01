@@ -18,7 +18,7 @@ public:
 
 	uintptr_t GetModuleAddress(const char* ModuleName);
 
-	BOOL WriteNOP(HANDLE hProcess, LPVOID lpAddress);
+	bool WriteNOP(HANDLE hProcess, LPVOID lpAddress);
 
 	// Reads a pointer - only works via dll injection.
 	template<class T>
@@ -38,8 +38,11 @@ public:
 	template<typename T>
 	T ReadMem(uintptr_t addr)
 	{
-		T val;
-		ReadProcessMemory(m_pHandle, (LPCVOID)addr, &val, sizeof(T), NULL);
+		T val{};
+		if (!ReadProcessMemory(m_pHandle, reinterpret_cast<LPCVOID>addr, &val, sizeof(T), nullptr))
+		{
+			std::cerr << "ReadProcessMemory() failed. Error: " << GetLastError() << std::endl;
+		}
 		return val;
 	}
 
@@ -47,7 +50,12 @@ public:
 	template<typename T>
 	bool WriteMem(uintptr_t addr, T val)
 	{
-		return WriteProcessMemory(m_pHandle, (LPVOID)addr, &val, sizeof(T), NULL);
+		if (!WriteProcessMemory(m_pHandle, (LPVOID)addr, &val, sizeof(T), NULL))
+		{
+			std::cerr << "WriteProcessMemory() failed. Error: " << GetLastError() << std::endl;
+			return false;
+		}
+		return true;
 	}
 
 	template<typename T>
