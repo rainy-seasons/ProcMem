@@ -6,14 +6,22 @@ PMemory::PMemory(const char* procName)
 {
 	PROCESSENTRY32 entry;
 	entry.dwSize = sizeof(PROCESSENTRY32);
-	auto snapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	HANDLE snapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	if (snapShot == INVALID_HANDLE_VALUE)
+	{
+		std::cerr << "CreateToolHelp32Snapshot failed. Error: " << GetLastError() << std::endl;
+	}
 
 	while (Process32Next(snapShot, &entry))
 	{
 		if (!strcmp(procName, entry.szExeFile))
 		{
 			this->m_PID = entry.th32ProcessID;
-			this->m_pHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, this->m_PID);
+			this->m_pHandle = OpenProcess(PROCESS_ALL_ACCESS, false, this->m_PID);
+			if (!this->m_pHandle)
+			{
+				std::cerr << "OpenProcess failed. Error: " << GetLastError() << std::endl;
+			}
 			break;
 		}
 	}
@@ -64,33 +72,33 @@ uintptr_t PMemory::GetModuleAddress(const char* moduleName)
 }
 
 // Writes a NOP byte to a specific address 
-BOOL WriteNOP(HANDLE hProcess, LPVOID lpAddress)
+bool PMemory::WriteNOP(HANDLE hProcess, LPVOID lpAddress)
 {
 	BYTE NOP = 0x90;
 	DWORD oldProtect;
-	
+
 	// Change the memory protection to allow writing
 	if (!VirtualProtectEx(hProcess, lpAddress, sizeof(NOP), PAGE_EXECUTE_READWRITE, &oldProtect))
 	{
 		std::cerr << "VirtualProtectEx failed: " << GetLastError() << std::endl;
-		return FALSE;
+		return false;
 	}
 
 	// Write the NOP instruction
-	SIZE_T written;
+	uintptr_t written;
 	if (!WriteProcessMemory(hProcess, lpAddress, &NOP, sizeof(NOP), &written) || written != sizeof(NOP))
 	{
 		std::cerr << "WriteProcessMemory failed: " << GetLastError() << std::endl;
 		// Restore the original memory protection
 		VirtualProtectEx(hProcess, lpAddress, sizeof(NOP), oldProtect, &oldProtect);
-		return FALSE;
+		return false;
 	}
 
 	// Restore the original memory protection
 	if (!VirtualProtectEx(hProcess, lpAddress, sizeof(NOP), oldProtect, &oldProtect))
 	{
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
